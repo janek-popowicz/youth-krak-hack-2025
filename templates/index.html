@@ -3,7 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <style>
+body {
+    height: 100vh ;
+    width: 100vh ;
+    display: flex ;   
+    justify-content: center ;
+    align-items: flex-end ;
+}
+nav {
+    position: relative ;
+    bottom: 0 ;
+    display: flex ;
+    align-items: flex-end ;
+    justify-content: center;
+    
+}
+button {
+    background: none ;
+    border: none ; 
+    height: fit-content ;
+    width: fit-content ;
+    z-index: 3 ;
+    &:hover {
+        background-color: rgba(0,0,0,0.4);
+    }
+    & > img {
+        z-index: 2 ;
+    }
+}
+    </style>
+    <title>Focus Forest</title>
     <link rel="manifest" href="manifest.json">
 
     <script>
@@ -13,6 +43,16 @@
     </script>
 </head>
 <body>
-    
+    <nav>
+        <button>
+            <img src="icons/guzik_g77.svg" alt="bulb">
+        </button>
+        <button>
+            <img src="icons/guzik_g78.svg" alt="plus">
+        </button>
+        <button>
+            <img src="icons/guzik_g79.svg" alt="case">
+        </button>
+    </nav>
 </body>
 </html>
