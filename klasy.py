@@ -10,7 +10,7 @@ class Przedmiot:
 
     Założenie: bazowy czas skupienia to 25 minut, a każdy level dodaje +5 minut.
     """
-    def __init__(self, nazwa, level=0):
+    def __init__(self, nazwa, level=1):
         self.nazwa = nazwa
         try:
             self.level = int(level)
@@ -19,7 +19,7 @@ class Przedmiot:
 
     @property
     def czas_skupienia(self):
-        base = 25
+        base = self.level * 5 
         per_level = 5
         return base + self.level * per_level
 

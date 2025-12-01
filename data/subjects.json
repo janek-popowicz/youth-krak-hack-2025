@@ -10,5 +10,23 @@
     "nazwa": "1",
     "level": 0,
     "czas_skupienia": 25
+  },
+  {
+    "id": "51d5f89b74cc413888ee5823371b86ab",
+    "nazwa": "ss",
+    "level": 0,
+    "czas_skupienia": 0
+  },
+  {
+    "id": "0ea9271b5e4845c2bd3ae7162d3fcbd9",
+    "nazwa": "ss",
+    "level": 0,
+    "czas_skupienia": 0
+  },
+  {
+    "id": "d2b7c6cce8594372b989a9d797b5233f",
+    "nazwa": "Fizyka",
+    "level": 0,
+    "czas_skupienia": 0
   }
 ]
