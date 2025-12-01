@@ -46,17 +46,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // konwersja minut -> level (base 25 + 5/min na level)
-        const base = 25;
-        const perLevel = 5;
-        let level = Math.floor(Math.max(0, minutes - base) / perLevel);
-        if (minutes < base) level = 0;
-
         try {
             const resp = await fetch(API, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({nazwa, level})
+                body: JSON.stringify({nazwa, czas_skupienia: minutes})
             });
             const data = await resp.json();
             if (!resp.ok) {
@@ -73,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // render + session logic
-    const intervals = new Map();
+    const sessions = new Map(); // id -> { rafId, phase, endTs, startTs, workMs, breakMs }
 
     async function fetchSubjects() {
         const res = await fetch(API);
@@ -92,7 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.innerHTML = `
                     <div class="info">
                         <strong>${escapeHtml(s.nazwa)}</strong>
-                        <small>Level: ${s.level} · Czas skupienia: ${s.czas_skupienia} min</small>
+                        <small class="meta">Level: ${s.level} · Czas skupienia: ${s.czas_skupienia} min</small>
+                        <div class="progress-wrap" aria-hidden="true">
+                            <div class="progress-bar" style="width:0%"></div>
+                        </div>
                         <small class="status" aria-live="polite"></small>
                     </div>
                     <div class="actions">
@@ -113,54 +110,96 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (intervals.has(subject.id)) {
+        // anuluj istniejącą sesję dla tego przedmiotu
+        if (sessions.has(subject.id)) {
             if (!confirm('Jest już aktywna sesja dla tego przedmiotu. Zastąpić?')) return;
-            clearInterval(intervals.get(subject.id).timer);
-            intervals.delete(subject.id);
+            const prev = sessions.get(subject.id);
+            cancelSession(subject.id, prev);
         }
 
         const workMin = subject.czas_skupienia;
         const breakMin = Math.ceil(workMin * 0.3);
 
-        // dla testów: jeśli chcesz krótsze czasy, zmień mnożnik tutaj (np. *1000 zamiast *60000)
+        // production: minutes -> ms
         const workMs = workMin * 60 * 1000;
         const breakMs = breakMin * 60 * 1000;
 
+        const progressBar = containerEl.querySelector('.progress-bar');
         const statusEl = containerEl.querySelector('.status');
-        const startTs = Date.now();
+
+        const startTs = performance.now();
         const workEnd = startTs + workMs;
         let phase = 'work';
 
-        const timer = setInterval(() => {
-            const now = Date.now();
-            if (phase === 'work') {
-                const left = Math.max(0, workEnd - now);
-                statusEl.textContent = `Nauka: ${formatMs(left)}`;
-                if (left <= 0) {
-                    phase = 'break';
-                    const breakEnd = Date.now() + breakMs;
-                    intervals.set(subject.id, { timer, endTs: breakEnd, phase });
+        function updateFrame(now) {
+            if (!sessions.has(subject.id)) return; // safety
+            const entry = sessions.get(subject.id);
+            if (!entry) return;
+
+            if (entry.phase === 'work') {
+                const elapsed = now - entry.startTs;
+                const pct = Math.min(1, elapsed / entry.workMs);
+                progressBar.style.width = `${pct * 100}%`;
+                progressBar.dataset.phase = 'work';
+                statusEl.textContent = `Nauka: ${formatMs(Math.max(0, Math.ceil((entry.workMs - elapsed))))}`;
+                if (pct >= 1) {
+                    // oznacz ukończenie work -> wyślij do serwera i przejdź do break
+                    (async () => {
+                        try {
+                            await fetch(`${API}/${encodeURIComponent(subject.id)}/session_complete`, { method: 'POST' });
+                            await renderSubjects(); // zaktualizuj sessions_done / czas_skupienia
+                        } catch (err) {
+                            console.error('Nie udało się zgłosić ukończenia sesji', err);
+                        }
+                    })();
+
+                    // przełącz do przerwy
+                    entry.phase = 'break';
+                    entry.startTs = now;
+                    entry.endTs = now + entry.breakMs;
+                    // reset progress for break (optional direction)
+                    progressBar.style.transition = 'width 0.2s linear';
+                    // we want progress to show break as filling from 0 -> 100 in break period
+                    progressBar.style.width = '0%';
                     alert(`Koniec nauki dla "${subject.nazwa}". Rozpoczyna się przerwa ${breakMin} min.`);
                 }
-            } else {
-                const entry = intervals.get(subject.id);
-                const left = Math.max(0, entry.endTs - now);
-                statusEl.textContent = `Przerwa: ${formatMs(left)}`;
-                if (left <= 0) {
-                    clearInterval(timer);
-                    intervals.delete(subject.id);
+            } else if (entry.phase === 'break') {
+                const elapsed = now - entry.startTs;
+                const pct = Math.min(1, elapsed / entry.breakMs);
+                progressBar.style.width = `${pct * 100}%`;
+                progressBar.dataset.phase = 'break';
+                statusEl.textContent = `Przerwa: ${formatMs(Math.max(0, Math.ceil((entry.breakMs - elapsed))))}`;
+                if (pct >= 1) {
+                    // koniec przerwy
+                    cancelSession(subject.id, entry);
                     statusEl.textContent = 'Gotowe ✅';
+                    progressBar.style.width = '100%';
                     alert(`Przerwa zakończona dla "${subject.nazwa}".`);
                 }
             }
-        }, 1000);
 
-        intervals.set(subject.id, { timer, endTs: workEnd, phase });
+            entry.rafId = requestAnimationFrame(updateFrame);
+        }
+
+        // store session entry
+        const rafId = requestAnimationFrame(updateFrame);
+        const entry = { rafId, phase, startTs, workMs, breakMs, endTs: workEnd };
+        sessions.set(subject.id, entry);
+
+        // initial styles
+        progressBar.style.transition = 'width 0.1s linear';
+        progressBar.style.width = '0%';
         statusEl.textContent = `Nauka: ${formatMs(workMs)}`;
     }
 
+    function cancelSession(id, entry) {
+        if (!entry) return;
+        if (entry.rafId) cancelAnimationFrame(entry.rafId);
+        sessions.delete(id);
+    }
+
     function formatMs(ms) {
-        const totalSec = Math.ceil(ms / 1000);
+        const totalSec = Math.max(0, Math.ceil(ms / 1000));
         const min = Math.floor(totalSec / 60);
         const sec = totalSec % 60;
         return `${min}m ${String(sec).padStart(2, '0')}s`;

@@ -1,32 +1,9 @@
 [
   {
-    "id": "dae12a0e2af94a4095180079726b9f62",
-    "nazwa": "Matematyka",
+    "id": "c0952c7e803642e4a70d23541aa7d4b9",
+    "nazwa": "Matma",
     "level": 0,
-    "czas_skupienia": 25
-  },
-  {
-    "id": "0bc91bc03bfc40dcae4d6088db341540",
-    "nazwa": "1",
-    "level": 0,
-    "czas_skupienia": 25
-  },
-  {
-    "id": "51d5f89b74cc413888ee5823371b86ab",
-    "nazwa": "ss",
-    "level": 0,
-    "czas_skupienia": 0
-  },
-  {
-    "id": "0ea9271b5e4845c2bd3ae7162d3fcbd9",
-    "nazwa": "ss",
-    "level": 0,
-    "czas_skupienia": 0
-  },
-  {
-    "id": "d2b7c6cce8594372b989a9d797b5233f",
-    "nazwa": "Fizyka",
-    "level": 0,
-    "czas_skupienia": 0
+    "czas_skupienia": 25,
+    "sessions_done": 0
   }
 ]
