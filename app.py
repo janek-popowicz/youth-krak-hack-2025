@@ -1,5 +1,5 @@
 from flask import Flask, render_template, send_from_directory
-
+import klasy
 app = Flask(__name__)
 
 @app.route("/")
@@ -22,6 +22,10 @@ def manifest():
 @app.route('/service-worker.js')
 def service_worker():
     return send_from_directory('static', 'service-worker.js')
+
+@app.route("/add_to_calendar")
+def add_to_calendar():
+    
 
 
 if __name__ == "__main__":
