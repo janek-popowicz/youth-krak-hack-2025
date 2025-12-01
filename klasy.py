@@ -1,24 +1,38 @@
-class WydarzenieKalendarzowe:
-    def __init__(self, nazwa, data, lokalizacja):
-        self.nazwa = nazwa
-        self.data = data
-        self.lokalizacja = lokalizacja
 
-    def __str__(self):
-        return f"{self.nazwa} - {self.data} @ {self.lokalizacja}"
+
+class Przedmiot:
+    """Model przedmiotu szkolnego.
+
+    Atrybuty:
+    - nazwa: nazwa przedmiotu
+    - level: poziom (int)
+    - czas_skupienia: obliczany na podstawie level (minuty)
+
+    Założenie: bazowy czas skupienia to 25 minut, a każdy level dodaje +5 minut.
+    """
+    def __init__(self, nazwa, level=0):
+        self.nazwa = nazwa
+        try:
+            self.level = int(level)
+        except Exception:
+            self.level = 0
+
+    @property
+    def czas_skupienia(self):
+        base = 25
+        per_level = 5
+        return base + self.level * per_level
 
     def to_dict(self, id=None):
-        """Serializuje wydarzenie do słownika (gotowego do zapisu w JSON)."""
         return {
-            "id": id,
-            "nazwa": self.nazwa,
-            "data": self.data,
-            "lokalizacja": self.lokalizacja,
+            'id': id,
+            'nazwa': self.nazwa,
+            'level': self.level,
+            'czas_skupienia': self.czas_skupienia,
         }
 
     @staticmethod
     def from_dict(d):
-        """Tworzy WydarzenieKalendarzowe z dicta (np. z JSON)."""
         if d is None:
             return None
-        return WydarzenieKalendarzowe(d.get("nazwa"), d.get("data"), d.get("lokalizacja"))
+        return Przedmiot(d.get('nazwa'), d.get('level', 0))
