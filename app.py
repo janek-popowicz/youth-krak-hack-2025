@@ -57,6 +57,12 @@ def service_worker():
     return send_from_directory('static', 'service-worker.js')
 
 
+@app.route('/icons/<path:filename>')
+def icons(filename):
+    """Serve icons from static/icons for relative paths like /icons/.. used in templates."""
+    return send_from_directory(os.path.join('static', 'icons'), filename)
+
+
 
 # -----------------------
 # Subjects (Przedmioty)
