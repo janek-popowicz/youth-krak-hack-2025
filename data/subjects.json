@@ -5,5 +5,12 @@
     "level": 0,
     "czas_skupienia": 25,
     "sessions_done": 0
+  },
+  {
+    "id": "9cdbd4866ef342f2bb5ea7e2e7c736e7",
+    "nazwa": "Fizyka",
+    "level": 0,
+    "czas_skupienia": 3,
+    "sessions_done": 1
   }
 ]
